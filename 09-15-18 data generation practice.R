@@ -56,8 +56,9 @@ u3=rnorm(H,0,1)
 u4=rnorm(H,0,1)
 u5=rnorm(H,0,1)
 
-# Below are coefficients for the MLM # 
-pi30=1 # unconditional treatment effect (TE) for every student #
+# Below are coefficients for the MLM treatment effect # 
+# All other coefficients that are in the draft but not listed here are either 0 or 1 #
+pi30=1 # unconditional effect of treatment effect (TE) #
 pi31=0.5 # impact of v1 on TE
 pi32=0.5 # impact of v2 on TE
 pi40=0.5 # impact of x1 on TE
@@ -91,12 +92,87 @@ for (h in 1:H){
 
 # Step 1.3.Generate selection probabilities 
 
+# school selection probability 
+p2=NULL
+s2=NULL
 
+# Set up school parameters. (p is approximately 0.25)
+alpha0=-1
+alpha1=2
+alpha2=-2
+  
+for (h in 1:H){
+  p2[h]=1/(1+exp(-(alpha0+alpha1*v1[h]+alpha2*v2[h])))
+  s2[h]=rbinom(1,1,p2[h])
+}
+
+mean(p2)
+hist(p2)
+plot(v1,p2)
+plot(v2,p2)
+
+
+# student selection probability 
+tau00=1 # unconditional selection probability 
+tau01=0.5 # impact of v1 on selection
+tau02=0.5 # impact of v2 on selection
+tau10=0.5 # impact of x1
+tau11=0.5 # impact of x1v1
+tau12=0.2 # impact of x1v2
+tau20=0.2 # impact of x2
+tau21=0.2 # impact of x2v1
+tau22=0.2 # impact of x2v2
+
+# random effects
+#omega0=rnorm(H,0,1) 
+#omega1=rnorm(H,0,1) 
+#omega2=rnorm(H,0,1)
+
+eta0=eta1=eta2=NULL
+p1=NULL
+s1=NULL
+
+
+for (h in 1:H){
+  p1[[h]]=rep(NA,K[h]) #student level probability 
+  s1[[h]]=rep(NA,K[h])
+#  e[[h]]=rep(NA,K[h])
+#  e[[h]]=rnorm(K[h],0,1) # student level random error follows N(0,1)
+  
+  eta0[h]=tau00+tau01*v1[h]+tau02*v2[h]
+  eta1[h]=tau10+tau11*v1[h]+tau12*v2[h]
+  eta2[h]=tau20+tau21*v1[h]+tau22*v2[h]
+  
+  for (k in 1:K[h]){
+    p1[[h]][k]=1/(1+exp(-(eta0[h]+eta1[h]*x1[[h]][k]+eta2[h]*x2[[h]][k])))
+    s1[[h]][k]=rbinom(1,1,p1[[h]][k])
+  }
+}
+
+
+##########################################################
 # Step 2. Saving all variables into a dataframe # 
-# unlist y1,y0,x1,x2
+
+# flatten all lists of variables 
+y1_l=unlist(y1)
+y0_l=unlist(y0)
+x1_l=unlist(x1)
+x2_l=unlist(x2)
+
+#generate school IDs
+schid=rep(seq(1:H),K)
+# generate student IDs
+studentid=sequence(K)
+
+#repeat v1,v2 by # students in the school 
+v1_l=rep(v1,K)
+v2_l=rep(v2,k)
+
+#combine all variables 
+dataset=data.frame(cbind(schlid,studentid,y1,y0,x1,x2,v1,v2))
 
 
-
+##########################################################
 
 
   
